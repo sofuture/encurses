@@ -4,9 +4,10 @@
 
 go() ->
     ok = application:start(encurses),
+    ok = encurses:start(ok,ok),
     Win = encurses:initscr(),
     encurses:werase(Win),
-    encurses:refresh(),
+    encurses:refresh(),    
     encurses:addch($A),
     encurses:addch($B),
     encurses:addch($C),
@@ -17,6 +18,8 @@ go() ->
     encurses:addch($H),
     encurses:addch($I),
     encurses:addch($J),
+    encurses:move(5,5), 
+    encurses:addstr("ROFL THIS IS SO GREAT"),
     encurses:refresh(),
     timer:sleep(3000),
     encurses:endwin().

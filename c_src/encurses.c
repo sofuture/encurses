@@ -4,6 +4,8 @@
 #include <ncurses.h>
 #include "erl_nif.h"
 
+#define BUFF_SIZE 1024
+
 static ERL_NIF_TERM done(ErlNifEnv* env, int code)
 {
     if(code == OK)
@@ -68,6 +70,23 @@ static ERL_NIF_TERM e_addch(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
     return done(env, addch((chtype)ch));
 }
 
+static ERL_NIF_TERM e_addstr(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
+{
+    long length;
+    enif_get_long(env, argv[0], &length);
+    char buff[length];
+    enif_get_string(env, argv[1], buff, length+1, ERL_NIF_LATIN1);
+    return done(env, addnstr(buff, length));
+}
+
+static ERL_NIF_TERM e_move(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
+{
+    long x, y;
+    enif_get_long(env, argv[0], &x);
+    enif_get_long(env, argv[1], &y);
+    return done(env, move((int)y, (int)x));
+}
+
 static ErlNifFunc nif_funcs[] =
 {
     {"refresh", 0, e_refresh},
@@ -78,6 +97,8 @@ static ErlNifFunc nif_funcs[] =
     {"echo", 0, e_echo},
     {"noecho", 0, e_noecho},
     {"addch", 1, e_addch},
+    {"e_addstr", 2, e_addstr},
+    {"move", 2, e_move},
     {"werase", 1, e_werase}
 };
 
