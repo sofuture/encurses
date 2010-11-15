@@ -1,0 +1,6 @@
+*.beam
+priv/*.so
+priv/lib/*
+c_src/*.o
+ebin/*.app
+*.erl.swp
