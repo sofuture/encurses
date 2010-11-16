@@ -2,33 +2,36 @@
 
 -author("Jeff Zellner <jeff.zellner@gmail.com>").
 
--behaviour(application).
-
--export([start/2, stop/1]).
+-on_load(load_nif/0).
 
 -export([
         addch/1, 
         addstr/1,
         cbreak/0, 
+        curs_set/1,
         echo/0,
-        endwin/0, 
+        endwin/0,
+        erase/0,
+        erase/1,
+        getxy/0,
+        getxy/1,
+        getmaxxy/0,
+        getmaxxy/1,
+        has_colors/0,
         initscr/0, 
         move/2,
         nocbreak/0, 
         noecho/0, 
         refresh/0,
-        werase/1
+        start_color/0
     ]).
 
 %% =============================================================================
-%% Application API
+%% NIF Loading
 %% =============================================================================
 
-start(_,_) ->
+load_nif() ->
     erlang:load_nif("./priv/encurses", 0).
-
-stop(_) ->
-    ok.
 
 %% =============================================================================
 %% Application API
@@ -58,14 +61,43 @@ noecho() ->
 addch(Char) when is_integer(Char) ->
     not_initialized.
 
-werase(Win) when is_integer(Win) ->
+erase() ->
+    not_initialized.
+
+erase(Win) when is_integer(Win) ->
     not_initialized.
 
 addstr(String) when is_list(String) ->
     Str = lists:flatten(String),
     e_addstr(erlang:iolist_size(Str), Str).
-e_addstr(Size, String) when is_integer(Size) andalso is_list(String) ->
-    not_initialized.
 
 move(X, Y) when is_integer(X) andalso is_integer(Y) ->
+    not_initialized.
+
+getxy() ->
+    not_initialized.
+
+getxy(Win) when is_integer(Win) ->
+    not_initialized.
+
+getmaxxy() ->
+    not_initialized.
+
+getmaxxy(Win) when is_integer(Win) ->
+    not_initialized.
+
+curs_set(Flag) when is_integer(Flag) ->
+    not_initialized.
+
+has_colors() ->
+    not_initialized.
+
+start_color() ->
+    not_initialized.
+
+%% =============================================================================
+%% Internal functions
+%% =============================================================================
+
+e_addstr(Size, String) when is_integer(Size) andalso is_list(String) ->
     not_initialized.
