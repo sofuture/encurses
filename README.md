@@ -1,10 +1,10 @@
 encurses
 =====
-A curses interface in and for Erlang.
+An ncurses library for Erlang.
 
 Requirements
 =====
 Erlang + Linux and/or knowledge and time required to make the curses driver compile on your platform.
 
-Erlang R14A+ built from source is recommended.
+Erlang R14A+ is recommended.
 
