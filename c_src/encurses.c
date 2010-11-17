@@ -228,31 +228,31 @@ e_start_color(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
 
 static ErlNifFunc nif_funcs[] =
 {
-    {"refresh", 0, e_refresh},
-    {"endwin", 0, e_endwin},
-    {"initscr", 0, e_initscr},
-    {"cbreak", 0, e_cbreak},
-    {"nocbreak", 0, e_nocbreak},
-    {"echo", 0, e_echo},
-    {"noecho", 0, e_noecho},
-    {"addch", 1, e_addch},
+    {"e_refresh", 0, e_refresh},
+    {"e_endwin", 0, e_endwin},
+    {"e_initscr", 0, e_initscr},
+    {"e_cbreak", 0, e_cbreak},
+    {"e_nocbreak", 0, e_nocbreak},
+    {"e_echo", 0, e_echo},
+    {"e_noecho", 0, e_noecho},
+    {"e_addch", 1, e_addch},
     {"e_addstr", 2, e_addstr},
 
-    {"move", 2, e_move},
+    {"e_move", 2, e_move},
 
-    {"erase", 0, e_erase},
-    {"erase", 1, e_werase},
+    {"e_erase", 0, e_erase},
+    {"e_erase", 1, e_werase},
 
-    {"getxy", 0, e_getxy},
-    {"getxy", 1, e_wgetxy},
+    {"e_getxy", 0, e_getxy},
+    {"e_getxy", 1, e_wgetxy},
 
-    {"getmaxxy", 0, e_getmaxxy},
-    {"getmaxxy", 1, e_wgetmaxxy},
+    {"e_getmaxxy", 0, e_getmaxxy},
+    {"e_getmaxxy", 1, e_wgetmaxxy},
 
-    {"curs_set", 1, e_curs_set},
+    {"e_curs_set", 1, e_curs_set},
 
-    {"has_colors", 0, e_has_colors},
-    {"start_color", 0, e_start_color},
+    {"e_has_colors", 0, e_has_colors},
+    {"e_start_color", 0, e_start_color},
 };
 
 ERL_NIF_INIT(encurses, nif_funcs, NULL, NULL, NULL, NULL)

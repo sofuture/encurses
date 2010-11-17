@@ -38,66 +38,120 @@ load_nif() ->
 %% =============================================================================
 
 refresh() ->
-    not_initialized.
+    e_refresh().
 
 endwin() ->
-    not_initialized.
+    e_endwin().
 
 initscr() ->
-    not_initialized.
+    e_initscr().
 
 cbreak() -> 
-    not_initialized.
+    e_cbreak().
 
-nocbreak() -> 
-    not_initialized.
+nocbreak() ->
+    e_nocbreak().
 
-echo() -> 
-    not_initialized.
+echo() ->
+    e_echo().
 
-noecho() -> 
-    not_initialized.
+noecho() ->
+    e_noecho().
 
 addch(Char) when is_integer(Char) ->
-    not_initialized.
+    e_addch(Char).
 
 erase() ->
-    not_initialized.
+    e_erase().
 
 erase(Win) when is_integer(Win) ->
-    not_initialized.
+    e_erase(Win).
 
 addstr(String) when is_list(String) ->
     Str = lists:flatten(String),
     e_addstr(erlang:iolist_size(Str), Str).
 
 move(X, Y) when is_integer(X) andalso is_integer(Y) ->
-    not_initialized.
+    e_move(X, Y).
 
 getxy() ->
-    not_initialized.
+    e_getxy().
 
 getxy(Win) when is_integer(Win) ->
-    not_initialized.
+    e_getxy(Win).
 
 getmaxxy() ->
-    not_initialized.
+    e_getmaxxy().
 
 getmaxxy(Win) when is_integer(Win) ->
-    not_initialized.
+    e_getmaxxy(Win).
 
 curs_set(Flag) when is_integer(Flag) ->
-    not_initialized.
+    e_curs_set(Flag).
 
 has_colors() ->
-    not_initialized.
+    e_has_colors().
 
 start_color() ->
-    not_initialized.
+    e_start_color().
 
 %% =============================================================================
 %% Internal functions
 %% =============================================================================
 
-e_addstr(Size, String) when is_integer(Size) andalso is_list(String) ->
+e_refresh() ->
+    not_initialized.
+
+e_endwin() ->
+    not_initialized.
+
+e_initscr() ->
+    not_initialized.
+
+e_cbreak() -> 
+    not_initialized.
+
+e_nocbreak() -> 
+    not_initialized.
+
+e_echo() -> 
+    not_initialized.
+
+e_noecho() -> 
+    not_initialized.
+
+e_addch(Char) when is_integer(Char) ->
+    not_initialized.
+
+e_erase() ->
+    not_initialized.
+
+e_erase(Win) when is_integer(Win) ->
+    not_initialized.
+
+e_addstr(StrLen, String) when is_integer(StrLen) andalso is_list(String) ->
+    not_initialized.
+
+e_move(X, Y) when is_integer(X) andalso is_integer(Y) ->
+    not_initialized.
+
+e_getxy() ->
+    not_initialized.
+
+e_getxy(Win) when is_integer(Win) ->
+    not_initialized.
+
+e_getmaxxy() ->
+    not_initialized.
+
+e_getmaxxy(Win) when is_integer(Win) ->
+    not_initialized.
+
+e_curs_set(Flag) when is_integer(Flag) ->
+    not_initialized.
+
+e_has_colors() ->
+    not_initialized.
+
+e_start_color() ->
     not_initialized.
