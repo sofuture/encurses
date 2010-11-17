@@ -4,9 +4,91 @@
 #include <ncurses.h>
 #include "erl_nif.h"
 
-#define BUFF_SIZE 1024
-
 static WINDOW *root;
+
+/** function prototypes **/
+
+/* return helpers */
+
+static ERL_NIF_TERM done(ErlNifEnv* env, int code);
+static ERL_NIF_TERM boolean(ErlNifEnv* env, int value);
+
+/* curses helpers */
+
+static ERL_NIF_TERM int_erase(ErlNifEnv* env, WINDOW *win);
+static ERL_NIF_TERM int_getxy(ErlNifEnv* env, WINDOW *win);
+static ERL_NIF_TERM int_getmaxxy(ErlNifEnv* env, WINDOW *win);
+
+/* more or less curses interface */
+
+static ERL_NIF_TERM e_refresh(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[]);
+static ERL_NIF_TERM e_wrefresh(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[]);
+
+static ERL_NIF_TERM e_newwin(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[]);
+static ERL_NIF_TERM e_delwin(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[]);
+static ERL_NIF_TERM e_endwin(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[]);
+
+static ERL_NIF_TERM e_initscr(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[]);
+
+static ERL_NIF_TERM e_cbreak(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[]);
+static ERL_NIF_TERM e_nocbreak(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[]);
+
+static ERL_NIF_TERM e_echo(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[]);
+static ERL_NIF_TERM e_noecho(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[]);
+
+static ERL_NIF_TERM e_erase(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[]);
+static ERL_NIF_TERM e_werase(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[]);
+
+static ERL_NIF_TERM e_addch(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[]);
+static ERL_NIF_TERM e_waddch(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[]);
+static ERL_NIF_TERM e_mvaddch(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[]);
+static ERL_NIF_TERM e_mvwaddch(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[]);
+
+static ERL_NIF_TERM e_addstr(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[]);
+static ERL_NIF_TERM e_waddstr(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[]);
+static ERL_NIF_TERM e_mvaddstr(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[]);
+static ERL_NIF_TERM e_mvwaddstr(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[]);
+
+static ERL_NIF_TERM e_move(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[]);
+static ERL_NIF_TERM e_wmove(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[]);
+
+static ERL_NIF_TERM e_getxy(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[]);
+static ERL_NIF_TERM e_wgetxy(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[]);
+static ERL_NIF_TERM e_getmaxxy(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[]);
+static ERL_NIF_TERM e_wgetmaxxy(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[]);
+
+static ERL_NIF_TERM e_curs_set(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[]);
+
+static ERL_NIF_TERM e_has_colors(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[]);
+static ERL_NIF_TERM e_start_color(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[]);
+
+static ERL_NIF_TERM e_init_pair(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[]);
+
+static ERL_NIF_TERM e_attron(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[]);
+static ERL_NIF_TERM e_wattron(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[]);
+static ERL_NIF_TERM e_attroff(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[]);
+static ERL_NIF_TERM e_wattroff(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[]);
+
+static ERL_NIF_TERM e_nl(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[]);
+static ERL_NIF_TERM e_nonl(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[]);
+
+static ERL_NIF_TERM e_scrollok(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[]);
+
+static ERL_NIF_TERM e_hline(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[]);
+static ERL_NIF_TERM e_whline(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[]);
+static ERL_NIF_TERM e_vline(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[]);
+static ERL_NIF_TERM e_wvline(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[]);
+
+static ERL_NIF_TERM e_border(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[]);
+static ERL_NIF_TERM e_wborder(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[]);
+
+static ERL_NIF_TERM e_box(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[]);
+
+static ERL_NIF_TERM e_keypad(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[]);
+
+static ERL_NIF_TERM e_getch(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[]);
+
+/* implementations */
 
 static ERL_NIF_TERM 
 done(ErlNifEnv* env, int code)
@@ -229,23 +311,38 @@ e_start_color(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
 static ErlNifFunc nif_funcs[] =
 {
     {"e_refresh", 0, e_refresh},
+    {"e_wrefresh", 1, e_wrefresh},
+
+    {"e_newwin", 4, e_endwin},
+    {"e_delwin", 1, e_endwin},
     {"e_endwin", 0, e_endwin},
+
     {"e_initscr", 0, e_initscr},
+
     {"e_cbreak", 0, e_cbreak},
     {"e_nocbreak", 0, e_nocbreak},
+
     {"e_echo", 0, e_echo},
     {"e_noecho", 0, e_noecho},
-    {"e_addch", 1, e_addch},
-    {"e_addstr", 2, e_addstr},
-
-    {"e_move", 2, e_move},
 
     {"e_erase", 0, e_erase},
     {"e_erase", 1, e_werase},
 
+    {"e_addch", 1, e_addch},
+    {"e_waddch", 2, e_waddch},
+    {"e_mvaddch", 3, e_mvaddch},
+    {"e_mvwaddch", 4, e_mvwaddch},
+
+    {"e_addstr", 2, e_addstr},
+    {"e_waddstr", 3, e_addstr},
+    {"e_mvaddstr", 4, e_addstr},
+    {"e_waddstr", 5, e_addstr},
+
+    {"e_move", 2, e_move},
+    {"e_wmove", 3, e_wmove},
+
     {"e_getxy", 0, e_getxy},
     {"e_getxy", 1, e_wgetxy},
-
     {"e_getmaxxy", 0, e_getmaxxy},
     {"e_getmaxxy", 1, e_wgetmaxxy},
 
@@ -253,6 +350,31 @@ static ErlNifFunc nif_funcs[] =
 
     {"e_has_colors", 0, e_has_colors},
     {"e_start_color", 0, e_start_color},
+
+    {"e_init_pair", 3, e_init_pair},
+
+    {"e_attron", 1, e_attron},
+    {"e_wattron", 2, e_wattron},
+    {"e_attroff", 1, e_attroff},
+    {"e_wattroff", 2, e_wattroff},
+
+    {"e_nl", 0, e_nl},
+    {"e_nonl", 0, e_nonl},
+
+    {"e_scrollok", 2, e_scrollok},
+
+    {"e_hline", 2, e_hline},
+    {"e_whline", 3, e_whline},
+    {"e_vline", 2, e_vline},
+    {"e_wvline", 3, e_wvline},
+
+    {"e_border", 8, e_border},
+    {"e_wborder", 9, e_wborder},
+
+    {"e_box", 3, e_box},
+
+    {"e_keypad", 2, e_keypad},
+    {"e_getch", 0, e_getch},
 };
 
 ERL_NIF_INIT(encurses, nif_funcs, NULL, NULL, NULL, NULL)
