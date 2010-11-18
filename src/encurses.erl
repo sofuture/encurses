@@ -46,6 +46,7 @@
         refresh/0,
         refresh/1,
         scrollok/2,
+        sigwinch/0,
         start_color/0,
         vline/2,
         vline/3,
@@ -274,6 +275,11 @@ keypad(Win, Flag) when is_integer(Win) and is_boolean(Flag) ->
 getch() ->
     e_getch().
 
+%% sigwinch
+
+sigwinch() ->
+    e_sigwinch().
+
 %% =============================================================================
 %% Internal functions
 %% =============================================================================
@@ -415,4 +421,8 @@ e_keypad(_Win, _Flag) ->
 
 e_getch() ->
     not_initialized.
+
+e_sigwinch() ->
+    not_initialized.
+
 
