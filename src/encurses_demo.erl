@@ -7,7 +7,8 @@ go() ->
     encurses:erase(),
     encurses:refresh(),
     old(Win),
-    splash_screen().
+    splash_screen(),
+    ok.
 
 old(Win) ->
     encurses:erase(),
@@ -110,7 +111,7 @@ splash_screen() ->
     spiral(0, 0, 1, 0, 0, 0, MX-1, MY-1, 0),
     encurses:refresh(),
     fade_in_title(" -=| E N C U R S E S |=- "),
-    timer:sleep(1000),
+    encurses:getch(),
     encurses:erase(),
     encurses:refresh(),
     encurses:endwin(),
