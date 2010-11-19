@@ -1,9 +1,10 @@
 -module(encurses_demo).
-
+-include("encurses.hrl").
 -compile(export_all).
 
 go() ->
-    Win = encurses:initscr(),
+    encurses:initscr(),
+    encurses:curs_set(?CURS_INVISIBLE),
     encurses:erase(),
     encurses:refresh(),
     Str = "Hello World! - encurses!",
