@@ -6,6 +6,12 @@
 
 #define _MAXWINDOWS 64
 
+typedef struct
+{
+    ErlNifEnv *env;
+    ERL_NIF_TERM pid;
+} TEnv;
+
 static WINDOW *slots[_MAXWINDOWS+1];
 
 /** function prototypes **/
@@ -16,6 +22,7 @@ static int load(ErlNifEnv* env, void** priv_data, ERL_NIF_TERM load_data);
 
 /* internal helpers */
 
+static void *do_getch(void *arg);
 static int find_free_window_slot();
 static ERL_NIF_TERM done(ErlNifEnv* env, int code);
 static ERL_NIF_TERM boolean(ErlNifEnv* env, int value);

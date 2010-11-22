@@ -566,9 +566,28 @@ e_keypad(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
 static ERL_NIF_TERM 
 e_getch(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
 {
+    TEnv *tenv = (TEnv *) enif_alloc(sizeof(TEnv));
+    tenv->env = enif_alloc_env();
+    tenv->pid = enif_make_copy(tenv->env, argv[0]);
+
+    ErlNifTid tid;
+    enif_thread_create("getch", &tid, do_getch, tenv, NULL);
+
+    return done(env, OK);
+}
+
+static void *
+do_getch(void *arg)
+{
+    TEnv *env = (TEnv *)arg;
+    ErlNifPid pid;
+    enif_get_local_pid(env->env, env->pid, &pid);
+
     int keycode;
     keycode = getch();
-    return enif_make_int(env, keycode);
+    enif_send(NULL, &pid, env->env, enif_make_int(env->env, keycode));
+    enif_clear_env(env->env);
+    return 0;
 }
 
 // sigwinch
@@ -647,7 +666,7 @@ static ErlNifFunc nif_funcs[] =
     {"e_box", 3, e_box},
 
     {"e_keypad", 2, e_keypad},
-    {"e_getch", 0, e_getch},
+    {"e_getch", 1, e_getch},
     {"e_sigwinch", 0, e_sigwinch},
 };
 

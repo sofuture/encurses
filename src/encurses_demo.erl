@@ -11,8 +11,9 @@ go() ->
     {Mx,My} = encurses:getmaxxy(),
     Str = "Hello World! - encurses!",
     StrLen = length(Str),
-    Timer = erlang:start_timer(5000, main, times_up),
+    Timer = erlang:start_timer(10000, main, times_up),
 
+    spawn(?MODULE, keyloop, []),
     spawn(?MODULE, other_win, []),
     spawn(?MODULE, bounce_text, [Str, StrLen, 0, 0, 1, 1]),
     spawn(?MODULE, bounce_timer, [Timer, Mx div 2, My div 2, -1, 1]),
@@ -80,3 +81,12 @@ refresh(Win) ->
     encurses:refresh(Win),
     timer:sleep(100),
     refresh(Win).
+
+keyloop() ->
+    encurses:noecho(),
+    Ch = encurses:getch(),
+    encurses:mvaddch(5,1 , Ch),
+    encurses:mvaddch(6,1, Ch),
+    encurses:mvaddch(7,1, Ch),
+    encurses:mvaddch(8,1, Ch),
+    keyloop().

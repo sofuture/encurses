@@ -273,7 +273,10 @@ keypad(Win, Flag) when is_integer(Win) and is_boolean(Flag) ->
 %% getch
 
 getch() ->
-    e_getch().
+    e_getch(self()),
+    receive
+        Char -> Char
+    end.
 
 %% sigwinch
 
@@ -419,7 +422,7 @@ e_box(_Win, _Horz, _Vert) ->
 e_keypad(_Win, _Flag) ->
     not_initialized.
 
-e_getch() ->
+e_getch(_Pid) ->
     not_initialized.
 
 e_sigwinch() ->
