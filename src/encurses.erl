@@ -30,7 +30,8 @@
         hline/3,
         has_colors/0,
         init_pair/3,
-        initscr/0, 
+        initscr/0,
+        keypad/1,
         keypad/2,
         move/2,
         move/3,
@@ -46,7 +47,6 @@
         refresh/0,
         refresh/1,
         scrollok/2,
-        sigwinch/0,
         start_color/0,
         vline/2,
         vline/3,
@@ -264,6 +264,9 @@ box(Win, Horz, Vert) when is_integer(Win) andalso is_integer(Horz) andalso
 
 %% keypad
 
+keypad(Flag) when is_boolean(Flag) ->
+    keypad(0, Flag).
+
 keypad(Win, Flag) when is_integer(Win) and is_boolean(Flag) ->
     case Flag of
         true -> e_keypad(Win, 1);
@@ -277,11 +280,6 @@ getch() ->
     receive
         Char -> Char
     end.
-
-%% sigwinch
-
-sigwinch() ->
-    e_sigwinch().
 
 %% =============================================================================
 %% Internal functions
@@ -423,7 +421,4 @@ e_keypad(_Win, _Flag) ->
     not_initialized.
 
 e_getch(_Pid) ->
-    not_initialized.
-
-e_sigwinch() ->
     not_initialized.

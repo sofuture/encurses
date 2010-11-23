@@ -1,25 +1,191 @@
 #include <stdlib.h>
 #include <string.h>
+#include <assert.h>
 #include <signal.h>
 #include <ncurses.h>
 #include "erl_nif.h"
 #include "encurses.h"
 
-static WINDOW *slots[_MAXWINDOWS+1];
+typedef struct _qitem_t
+{
+    struct _qitem_t* next;
+    ErlNifPid* pid;
+} qitem_t;
+
+typedef struct
+{
+    ErlNifMutex* lock;
+    ErlNifCond* cond;
+    qitem_t* head;
+    qitem_t* tail;
+} queue_t;
+
+typedef struct
+{
+    ErlNifThreadOpts* opts;
+    ErlNifTid qthread;
+    queue_t* queue;
+    ERL_NIF_TERM atom_ok;
+} state_t;
+
+queue_t*
+queue_create()
+{
+    queue_t* ret;
+    
+    ret = (queue_t*) enif_alloc(sizeof(queue_t));
+    if(ret == NULL) return NULL;
+
+    ret->lock = NULL; 
+    ret->cond = NULL; 
+    ret->head = NULL; 
+    ret->tail = NULL;
+
+    ret->lock = enif_mutex_create("q_lock");
+    if(ret->lock == NULL) goto error;
+
+    ret->cond = enif_cond_create("q_cond");
+    if(ret->cond == NULL) goto error;
+
+    return ret;
+
+error:
+    if(ret->lock != NULL) enif_mutex_destroy(ret->lock);
+    if(ret->cond != NULL) enif_cond_destroy(ret->cond);
+    if(ret != NULL) enif_free(ret);
+    return NULL;
+}
+
+void
+queue_destroy(queue_t* queue)
+{
+    ErlNifMutex* lock;
+    ErlNifCond* cond;
+
+    enif_mutex_lock(queue->lock);
+    assert(queue->head == NULL && "Destroying a non-empty queue.");
+    assert(queue->tail == NULL && "Destroying a queue in an invalid state.");
+    lock = queue->lock;
+    cond = queue->cond;
+    queue->lock = NULL;
+    queue->cond = NULL;
+    enif_mutex_unlock(lock);
+
+    enif_cond_destroy(cond);
+    enif_mutex_destroy(lock);
+    enif_free(queue);
+}
+
+int
+queue_push(queue_t* queue, ErlNifPid* pid)
+{
+    qitem_t* item = (qitem_t*) enif_alloc(sizeof(qitem_t));
+    if(item == NULL) return 0;
+
+    item->pid = pid;
+    item->next = NULL;
+
+    enif_mutex_lock(queue->lock);
+
+    if(queue->tail != NULL)
+    {
+        queue->tail->next = item;
+    }
+
+    queue->tail = item;
+
+    if(queue->head == NULL)
+    {
+        queue->head = queue->tail;
+    }
+
+    enif_cond_signal(queue->cond);
+    enif_mutex_unlock(queue->lock);
+
+    return 1;
+}
+
+ErlNifPid*
+queue_pop(queue_t* queue)
+{
+    qitem_t* item;
+    ErlNifPid* ret = NULL;
+    
+    enif_mutex_lock(queue->lock);
+
+    while(queue->head == NULL)
+    {
+        enif_cond_wait(queue->cond, queue->lock);
+    }
+
+    item = queue->head;
+    queue->head = item->next;
+    item->next = NULL;
+
+    if(queue->head == NULL)
+    {
+        queue->tail = NULL;
+    }
+
+    enif_mutex_unlock(queue->lock);
+
+    ret = item->pid;
+    enif_free(item);
+
+    return ret;
+}
 
 /** implementations **/
 
 /* NIF management */
 
 static int
-load(ErlNifEnv* env, void** priv_data, ERL_NIF_TERM load_info)
+load(ErlNifEnv* env, void** priv, ERL_NIF_TERM load_info)
 {
     int i;
     for(i=0;i<_MAXWINDOWS;i++){
         slots[i] = NULL;
     }
+
+    state_t* state = (state_t*) enif_alloc(sizeof(state_t));
+    if(state == NULL) return -1;
+
+    state->queue = queue_create();
+    if(state->queue == NULL) goto error;
+
+    state->opts = enif_thread_opts_create("thread_opts");
+    if(enif_thread_create("", &(state->qthread), thr_main, state, state->opts
+                ) != 0)
+    {
+        goto error;
+    }
+
+    state->atom_ok = enif_make_atom(env, "ok");
+
+    *priv = (void*) state;
+
     return 0;
+
+error:
+    if(state->queue != NULL) queue_destroy(state->queue);
+    enif_free(state->queue);
+    return -1;
 }
+
+static void
+unload(ErlNifEnv* env, void* priv)
+{
+    state_t* state = (state_t*) priv;
+    void* resp;
+
+    queue_push(state->queue, NULL);
+    enif_thread_join(state->qthread, &resp);
+    queue_destroy(state->queue);
+
+    enif_thread_opts_destroy(state->opts);
+    enif_free(state);
+}
+
 
 /* internal helper functions */
 
@@ -566,36 +732,36 @@ e_keypad(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
 static ERL_NIF_TERM 
 e_getch(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
 {
-    TEnv *tenv = (TEnv *) enif_alloc(sizeof(TEnv));
-    tenv->env = enif_alloc_env();
-    tenv->pid = enif_make_copy(tenv->env, argv[0]);
+    state_t* state = (state_t*) enif_priv_data(env);
+    ErlNifPid* pid = (ErlNifPid*) enif_alloc(sizeof(ErlNifPid));
 
-    ErlNifTid tid;
-    enif_thread_create("getch", &tid, do_getch, tenv, NULL);
+    if(!enif_get_local_pid(env, argv[0], pid))
+    {
+        return enif_make_badarg(env);
+    }
 
-    return done(env, OK);
+    queue_push(state->queue, pid);
+
+    return state->atom_ok;
 }
 
-static void *
-do_getch(void *arg)
+static void*
+thr_main(void* obj)
 {
-    TEnv *env = (TEnv *)arg;
-    ErlNifPid pid;
-    enif_get_local_pid(env->env, env->pid, &pid);
+    state_t* state = (state_t*) obj;
+    ErlNifEnv* env = enif_alloc_env();
+    ErlNifPid* pid;
+    ERL_NIF_TERM msg;
 
-    int keycode;
-    keycode = getch();
-    enif_send(NULL, &pid, env->env, enif_make_int(env->env, keycode));
-    enif_clear_env(env->env);
-    return 0;
-}
+    while((pid = queue_pop(state->queue)) != NULL)
+    {
+        msg = enif_make_int(env, getch());
+        enif_send(NULL, pid, env, msg);
+        enif_free(pid);
+        enif_clear_env(env);
+    }
 
-// sigwinch
-
-static ERL_NIF_TERM 
-e_sigwinch(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
-{
-    return done(env, OK);
+    return NULL;
 }
 
 /* NIF map */
@@ -667,7 +833,6 @@ static ErlNifFunc nif_funcs[] =
 
     {"e_keypad", 2, e_keypad},
     {"e_getch", 1, e_getch},
-    {"e_sigwinch", 0, e_sigwinch},
 };
 
-ERL_NIF_INIT(encurses, nif_funcs, load, NULL, NULL, NULL)
+ERL_NIF_INIT(encurses, nif_funcs, load, NULL, NULL, unload)

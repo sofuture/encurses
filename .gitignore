@@ -5,3 +5,4 @@ c_src/*.o
 ebin/*.app
 *.erl.swp
 *.c.swp
+*.h.swp

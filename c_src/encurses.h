@@ -6,23 +6,18 @@
 
 #define _MAXWINDOWS 64
 
-typedef struct
-{
-    ErlNifEnv *env;
-    ERL_NIF_TERM pid;
-} TEnv;
-
 static WINDOW *slots[_MAXWINDOWS+1];
 
 /** function prototypes **/
 
 /* NIF management */
 
-static int load(ErlNifEnv* env, void** priv_data, ERL_NIF_TERM load_data);
+static int load(ErlNifEnv* env, void** priv, ERL_NIF_TERM load_data);
+static void unload(ErlNifEnv* env, void* priv);
 
 /* internal helpers */
 
-static void *do_getch(void *arg);
+static void *thr_main(void *arg);
 static int find_free_window_slot();
 static ERL_NIF_TERM done(ErlNifEnv* env, int code);
 static ERL_NIF_TERM boolean(ErlNifEnv* env, int value);
@@ -101,6 +96,4 @@ static ERL_NIF_TERM e_box(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[]);
 static ERL_NIF_TERM e_keypad(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[]);
 
 static ERL_NIF_TERM e_getch(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[]);
-
-static ERL_NIF_TERM e_sigwinch(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[]);
 

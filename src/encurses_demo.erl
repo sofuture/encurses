@@ -4,6 +4,7 @@
 
 go() ->
     encurses:initscr(),
+    encurses:keypad(0, true),
     encurses:curs_set(?CURS_INVISIBLE),
     encurses:erase(),
     encurses:refresh(),
@@ -85,8 +86,30 @@ refresh(Win) ->
 keyloop() ->
     encurses:noecho(),
     Ch = encurses:getch(),
-    encurses:mvaddch(5,1 , Ch),
-    encurses:mvaddch(6,1, Ch),
-    encurses:mvaddch(7,1, Ch),
-    encurses:mvaddch(8,1, Ch),
+    encurses:mvaddstr(10,10,"        "),
+    encurses:mvaddstr(10,10,io_lib:format("~p",[parse_direction(Ch)])),
     keyloop().
+
+parse_direction(Char) ->
+    case Char of
+        262 -> kp_nw;
+        $7 -> kp_nw;
+        259 -> kp_n;
+        $8 -> kp_n;
+        339 -> kp_ne;
+        $9 -> kp_ne;
+        260 -> kp_w;
+        $4 -> kp_w;
+        350 -> kp_center;
+        $5 -> kp_center;
+        261 -> kp_e;
+        $6 -> kp_e;
+        360 -> kp_sw;
+        $1 -> kp_sw;
+        258 -> kp_s;
+        $2 -> kp_s;
+        338 -> kp_se;
+        $3 -> kp_se;
+        Other -> Other
+    end.
+
