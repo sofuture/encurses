@@ -10,3 +10,5 @@ Erlang + Linux and/or knowledge and time required to make the curses driver comp
 
 Erlang R14A+ is recommended.
 
+SMP Erlang required.
+
