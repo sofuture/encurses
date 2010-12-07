@@ -6,6 +6,8 @@
 #include "erl_nif.h"
 #include "encurses.h"
 
+static ErlNifMutex* mutex = NULL;
+
 typedef struct _qitem_t
 {
     struct _qitem_t* next;
@@ -142,6 +144,8 @@ queue_pop(queue_t* queue)
 static int
 load(ErlNifEnv* env, void** priv, ERL_NIF_TERM load_info)
 {
+    mutex = enif_mutex_create("nif_lock");
+
     int i;
     for(i=0;i<_MAXWINDOWS;i++){
         slots[i] = NULL;
@@ -167,6 +171,7 @@ load(ErlNifEnv* env, void** priv, ERL_NIF_TERM load_info)
     return 0;
 
 error:
+    if(mutex != NULL) enif_mutex_destroy(mutex);
     if(state->queue != NULL) queue_destroy(state->queue);
     enif_free(state->queue);
     return -1;
