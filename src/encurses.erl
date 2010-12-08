@@ -59,7 +59,12 @@
 %% =============================================================================
 
 load_nif() ->
-    erlang:load_nif("./priv/encurses", 0).
+    Dir = case code:priv_dir(encurses) of
+        {error, bad_name} ->
+            filename:dirname(code:which(?MODULE)) ++ "/../priv";
+        OtherDir -> OtherDir
+    end,
+    erlang:load_nif(Dir ++ "/encurses", 0).
 
 %% =============================================================================
 %% Application API
