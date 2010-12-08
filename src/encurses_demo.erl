@@ -1,3 +1,14 @@
+%% ============================================================================
+%% Encurses 0.4.0
+%%
+%% Copyright 2010 Jeff Zellner
+%%
+%% This software is provided with absolutely no assurances, guarantees, 
+%% promises or assertions whatsoever.
+%%
+%% Do what thou wilt shall be the whole of the law.
+%% ===========================================================================
+
 -module(encurses_demo).
 -include("encurses.hrl").
 -compile(export_all).
