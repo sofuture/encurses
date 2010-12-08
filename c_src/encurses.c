@@ -6,6 +6,8 @@
 #include "erl_nif.h"
 #include "encurses.h"
 
+static ErlNifMutex* g_lock = NULL;
+
 typedef struct _qitem_t
 {
     struct _qitem_t* next;
@@ -142,6 +144,8 @@ queue_pop(queue_t* queue)
 static int
 load(ErlNifEnv* env, void** priv, ERL_NIF_TERM load_info)
 {
+    g_lock = enif_mutex_create("g_lock");
+
     int i;
     for(i=0;i<_MAXWINDOWS;i++){
         slots[i] = NULL;
@@ -167,6 +171,7 @@ load(ErlNifEnv* env, void** priv, ERL_NIF_TERM load_info)
     return 0;
 
 error:
+    if(g_lock != NULL) enif_mutex_destroy(g_lock);
     if(state->queue != NULL) queue_destroy(state->queue);
     enif_free(state->queue);
     return -1;
@@ -177,6 +182,8 @@ unload(ErlNifEnv* env, void* priv)
 {
     state_t* state = (state_t*) priv;
     void* resp;
+
+    if(g_lock != NULL) enif_mutex_destroy(g_lock);
 
     queue_push(state->queue, NULL);
     enif_thread_join(state->qthread, &resp);
@@ -233,7 +240,10 @@ boolean(ErlNifEnv* env, int value)
 static ERL_NIF_TERM 
 e_refresh(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
 {
-    return done(env, refresh());
+    enif_mutex_lock(g_lock);
+    int code = refresh();
+    enif_mutex_unlock(g_lock);
+    return done(env, code);
 }
 
 static ERL_NIF_TERM 
@@ -241,7 +251,12 @@ e_wrefresh(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
 {
     long win;
     enif_get_long(env, argv[0], &win);
-    return done(env, wrefresh(slots[win]));
+
+    enif_mutex_lock(g_lock);
+    int code = wrefresh(slots[win]);
+    enif_mutex_unlock(g_lock);
+
+    return done(env, code);
 }
 
 // newwin
@@ -249,6 +264,7 @@ e_wrefresh(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
 static ERL_NIF_TERM 
 e_newwin(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
 {
+    enif_mutex_lock(g_lock);
     int slot = find_free_window_slot();
     if(slot >= 1) {
         int width, height, startx, starty;
@@ -257,8 +273,10 @@ e_newwin(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
         enif_get_int(env, argv[2], &startx);
         enif_get_int(env, argv[3], &starty);
         slots[slot] = newwin(height, width, starty, startx);
+        enif_mutex_unlock(g_lock);
         return enif_make_long(env, slot);
     } else {
+        enif_mutex_unlock(g_lock);
         return done(env, FALSE);
     }
 }
@@ -270,18 +288,22 @@ e_delwin(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
 {
     long slot;
     enif_get_long(env, argv[0], &slot);
+    enif_mutex_lock(g_lock);
     if(slot == 0) 
     {
+        enif_mutex_unlock(g_lock);
         return done(env, FALSE);
     }
     else if(slots[slot] == NULL) 
     {
+        enif_mutex_unlock(g_lock);
         return done(env, FALSE);
     }
     else 
     {
         delwin(slots[slot]);
         slots[slot] = NULL;
+        enif_mutex_unlock(g_lock);
         return done(env, OK);
     }
 }
@@ -291,7 +313,10 @@ e_delwin(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
 static ERL_NIF_TERM 
 e_endwin(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
 {
-    return done(env, endwin());
+    enif_mutex_lock(g_lock);
+    int code = endwin();
+    enif_mutex_unlock(g_lock);
+    return done(env, code);
 }
 
 // initscr
@@ -299,7 +324,9 @@ e_endwin(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
 static ERL_NIF_TERM 
 e_initscr(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
 {
+    enif_mutex_lock(g_lock);
     slots[0] = (WINDOW *)initscr();
+    enif_mutex_unlock(g_lock);
     return enif_make_long(env, 0);
 }
 
@@ -308,7 +335,10 @@ e_initscr(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
 static ERL_NIF_TERM 
 e_cbreak(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
 {
-    return done(env, cbreak());
+    enif_mutex_lock(g_lock);
+    int code = cbreak();
+    enif_mutex_unlock(g_lock);
+    return done(env, code);
 }
 
 // nocbreak
@@ -316,7 +346,10 @@ e_cbreak(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
 static ERL_NIF_TERM 
 e_nocbreak(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
 {
-    return done(env, nocbreak());
+    enif_mutex_lock(g_lock);
+    int code = nocbreak();
+    enif_mutex_unlock(g_lock);
+    return done(env, code);
 }
 
 // echo
@@ -324,7 +357,10 @@ e_nocbreak(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
 static ERL_NIF_TERM 
 e_echo(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
 {
-    return done(env, echo());
+    enif_mutex_lock(g_lock);
+    int code = echo();
+    enif_mutex_unlock(g_lock);
+    return done(env, code);
 }
 
 // noecho
@@ -332,7 +368,10 @@ e_echo(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
 static ERL_NIF_TERM 
 e_noecho(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
 {
-    return done(env, noecho());
+    enif_mutex_lock(g_lock);
+    int code = noecho();
+    enif_mutex_unlock(g_lock);
+    return done(env, code);
 }
 
 // erase
@@ -340,7 +379,10 @@ e_noecho(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
 static ERL_NIF_TERM 
 int_erase(ErlNifEnv* env, WINDOW *win)
 {
-    return done(env, werase(win));
+    enif_mutex_lock(g_lock);
+    int code = werase(win);
+    enif_mutex_unlock(g_lock);
+    return done(env, code);
 }
 
 static ERL_NIF_TERM 
@@ -364,7 +406,10 @@ e_addch(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
 {
     long ch;
     enif_get_long(env, argv[0], &ch);
-    return done(env, addch((chtype)ch));
+    enif_mutex_lock(g_lock);
+    int code = addch((chtype)ch);
+    enif_mutex_unlock(g_lock);
+    return done(env, code);
 }
 
 static ERL_NIF_TERM 
@@ -373,7 +418,10 @@ e_waddch(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
     long win, ch;
     enif_get_long(env, argv[0], &win);
     enif_get_long(env, argv[1], &ch);
-    return done(env, waddch(slots[win], (chtype)ch));
+    enif_mutex_lock(g_lock);
+    int code = waddch(slots[win], (chtype)ch);
+    enif_mutex_unlock(g_lock);
+    return done(env, code);
 }
 
 static ERL_NIF_TERM 
@@ -383,7 +431,10 @@ e_mvaddch(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
     enif_get_long(env, argv[0], &x);
     enif_get_long(env, argv[1], &y);
     enif_get_long(env, argv[2], &ch);
-    return done(env, mvaddch((int)y, (int)x, (chtype)ch));
+    enif_mutex_lock(g_lock);
+    int code = mvaddch((int)y, (int)x, (chtype)ch);
+    enif_mutex_unlock(g_lock);
+    return done(env, code);
 }
 
 static ERL_NIF_TERM 
@@ -394,7 +445,10 @@ e_mvwaddch(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
     enif_get_long(env, argv[1], &x);
     enif_get_long(env, argv[2], &y);
     enif_get_long(env, argv[3], &ch);
-    return done(env, mvwaddch(slots[win], (int)y, (int)x, (chtype)ch));
+    enif_mutex_lock(g_lock);
+    int code = mvwaddch(slots[win], (int)y, (int)x, (chtype)ch);
+    enif_mutex_unlock(g_lock);
+    return done(env, code);
 }
 
 // addstr
@@ -406,8 +460,10 @@ e_addstr(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
     enif_get_long(env, argv[0], &length);
     char buff[length];
     enif_get_string(env, argv[1], buff, length+1, ERL_NIF_LATIN1);
-
-    return done(env, addnstr(buff, length));
+    enif_mutex_lock(g_lock);
+    int code = addnstr(buff, length);
+    enif_mutex_unlock(g_lock);
+    return done(env, code);
 }
 
 static ERL_NIF_TERM 
@@ -421,8 +477,12 @@ e_waddstr(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
 
     int win;
     enif_get_int(env, argv[0], &win);
+    
+    enif_mutex_lock(g_lock);
+    int code = waddnstr(slots[win], buff, length);
+    enif_mutex_unlock(g_lock);
 
-    return done(env, waddnstr(slots[win], buff, length));
+    return done(env, code);
 }
 
 static ERL_NIF_TERM 
@@ -437,8 +497,12 @@ e_mvaddstr(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
     int x, y;
     enif_get_int(env, argv[0], &x);
     enif_get_int(env, argv[1], &y);
+    
+    enif_mutex_lock(g_lock);
+    int code = mvaddnstr(y, x, buff, length);
+    enif_mutex_unlock(g_lock);
 
-    return done(env, mvaddnstr(y, x, buff, length));
+    return done(env, code);
 }
 
 static ERL_NIF_TERM 
@@ -454,7 +518,12 @@ e_mvwaddstr(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
     enif_get_int(env, argv[0], &win);
     enif_get_int(env, argv[1], &x);
     enif_get_int(env, argv[2], &y);
-    return done(env, mvwaddnstr(slots[win], y, x, buff, length));
+
+    enif_mutex_lock(g_lock);
+    int code = mvwaddnstr(slots[win], y, x, buff, length);
+    enif_mutex_unlock(g_lock);
+
+    return done(env, code);
 }
 
 // move
@@ -465,7 +534,10 @@ e_move(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
     int x, y;
     enif_get_int(env, argv[0], &x);
     enif_get_int(env, argv[1], &y);
-    return done(env, move(y, x));
+    enif_mutex_lock(g_lock);
+    int code = move(y,x);
+    enif_mutex_unlock(g_lock);
+    return done(env, code);
 }
 
 static ERL_NIF_TERM
@@ -475,7 +547,10 @@ e_wmove(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
     enif_get_int(env, argv[0], &win);
     enif_get_int(env, argv[1], &x);
     enif_get_int(env, argv[2], &y);
-    return done(env, wmove(slots[win], y, x));
+    enif_mutex_lock(g_lock);
+    int code = wmove(slots[win], y,x);
+    enif_mutex_unlock(g_lock);
+    return done(env, code);
 }
 
 // getxy
@@ -484,7 +559,9 @@ static ERL_NIF_TERM
 int_getxy(ErlNifEnv* env, WINDOW *win)
 {
     long x, y;
+    enif_mutex_lock(g_lock);
     getyx(win, y, x);
+    enif_mutex_unlock(g_lock);
     return enif_make_tuple2(env,
         enif_make_int(env, (int) x),
         enif_make_int(env, (int) y));
@@ -510,7 +587,9 @@ static ERL_NIF_TERM
 int_getmaxxy(ErlNifEnv* env, WINDOW *win)
 {
     long x, y;
+    enif_mutex_lock(g_lock);
     getmaxyx(win, y, x);
+    enif_mutex_unlock(g_lock);
     return enif_make_tuple2(env,
         enif_make_int(env, (int) x),
         enif_make_int(env, (int) y));
@@ -537,7 +616,10 @@ e_curs_set(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
 {
     long flag;
     enif_get_long(env, argv[0], &flag);
-    return done(env, curs_set((int)flag));
+    enif_mutex_lock(g_lock);
+    int code = curs_set((int)flag);
+    enif_mutex_unlock(g_lock);
+    return done(env, code);
 }
 
 // has_colors
@@ -545,7 +627,10 @@ e_curs_set(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
 static ERL_NIF_TERM 
 e_has_colors(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
 {
-    return boolean(env, has_colors());
+    enif_mutex_lock(g_lock);
+    int code = has_colors();
+    enif_mutex_unlock(g_lock);
+    return boolean(env, code);
 }
 
 // start_colors
@@ -553,7 +638,10 @@ e_has_colors(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
 static ERL_NIF_TERM 
 e_start_color(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
 {
-    return done(env, start_color());
+    enif_mutex_lock(g_lock);
+    int code = start_color();
+    enif_mutex_unlock(g_lock);
+    return done(env, code);
 }
 
 // init_pair
@@ -565,7 +653,11 @@ e_init_pair(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
     enif_get_long(env, argv[0], &n);
     enif_get_long(env, argv[1], &fcolor);
     enif_get_long(env, argv[2], &bcolor);
-    return done(env, init_pair((int)n, (int)fcolor, (int)bcolor));
+
+    enif_mutex_lock(g_lock);
+    int code = init_pair((int)n, (int)fcolor, (int)bcolor);
+    enif_mutex_unlock(g_lock);
+    return done(env, code);
 }
 
 // attron/attroff
@@ -575,7 +667,10 @@ e_attron(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
 {
     long attrs;
     enif_get_long(env, argv[0], &attrs);
-    return done(env, wattron(slots[0], (int)attrs));
+    enif_mutex_lock(g_lock);
+    int code = wattron(slots[0], (int)attrs);
+    enif_mutex_unlock(g_lock);
+    return done(env, code);
 }
 
 static ERL_NIF_TERM 
@@ -584,7 +679,10 @@ e_wattron(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
     long win, attrs;
     enif_get_long(env, argv[0], &win);
     enif_get_long(env, argv[1], &attrs);
-    return done(env, wattron(slots[win], (int)attrs));
+    enif_mutex_lock(g_lock);
+    int code = wattron(slots[win], (int)attrs);
+    enif_mutex_unlock(g_lock);
+    return done(env, code);
 }
 
 static ERL_NIF_TERM 
@@ -592,7 +690,10 @@ e_attroff(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
 {
     long attrs;
     enif_get_long(env, argv[0], &attrs);
-    return done(env, wattroff(slots[0], (int)attrs));
+    enif_mutex_lock(g_lock);
+    int code = wattroff(slots[0], (int)attrs);
+    enif_mutex_unlock(g_lock);
+    return done(env, code);
 }
 
 static ERL_NIF_TERM 
@@ -601,7 +702,10 @@ e_wattroff(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
     long win, attrs;
     enif_get_long(env, argv[0], &win);
     enif_get_long(env, argv[1], &attrs);
-    return done(env, wattroff(slots[win], (int)attrs));
+    enif_mutex_lock(g_lock);
+    int code = wattroff(slots[win], (int)attrs);
+    enif_mutex_unlock(g_lock);
+    return done(env, code);
 }
 
 // nl/nonl
@@ -609,13 +713,19 @@ e_wattroff(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
 static ERL_NIF_TERM 
 e_nl(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
 {
-    return done(env, nl());
+    enif_mutex_lock(g_lock);
+    int code = nl();
+    enif_mutex_unlock(g_lock);
+    return done(env, code);
 }
 
 static ERL_NIF_TERM 
 e_nonl(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
 {
-    return done(env, nonl());
+    enif_mutex_lock(g_lock);
+    int code = nonl();
+    enif_mutex_unlock(g_lock);
+    return done(env, code);
 }
 
 // scrollok
@@ -626,7 +736,10 @@ e_scrollok(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
     long win, flag;
     enif_get_long(env, argv[0], &win);
     enif_get_long(env, argv[1], &flag);
-    return done(env, scrollok(slots[win], (int)flag));
+    enif_mutex_lock(g_lock);
+    int code = scrollok(slots[win], (int)flag);
+    enif_mutex_unlock(g_lock);
+    return done(env, code);
 }
 
 // vline/hline
@@ -637,7 +750,10 @@ e_hline(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
     long ch, max;
     enif_get_long(env, argv[0], &ch);
     enif_get_long(env, argv[1], &max);
-    return done(env, whline(slots[0], (chtype)ch, (int)max));
+    enif_mutex_lock(g_lock);
+    int code = whline(slots[0], (chtype)ch, (int)max);
+    enif_mutex_unlock(g_lock);
+    return done(env, code);
 }
 
 static ERL_NIF_TERM 
@@ -647,7 +763,10 @@ e_whline(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
     enif_get_long(env, argv[0], &win);
     enif_get_long(env, argv[1], &ch);
     enif_get_long(env, argv[2], &max);
-    return done(env, whline(slots[win], (chtype)ch, (int)max));
+    enif_mutex_lock(g_lock);
+    int code = whline(slots[win], (chtype)ch, (int)max);
+    enif_mutex_unlock(g_lock);
+    return done(env, code);
 }
 
 static ERL_NIF_TERM 
@@ -656,7 +775,10 @@ e_vline(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
     long ch, max;
     enif_get_long(env, argv[0], &ch);
     enif_get_long(env, argv[1], &max);
-    return done(env, wvline(slots[0], (chtype)ch, (int)max));
+    enif_mutex_lock(g_lock);
+    int code = wvline(slots[0], (chtype)ch, (int)max);
+    enif_mutex_unlock(g_lock);
+    return done(env, code);
 }
 
 static ERL_NIF_TERM 
@@ -666,7 +788,10 @@ e_wvline(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
     enif_get_long(env, argv[0], &win);
     enif_get_long(env, argv[1], &ch);
     enif_get_long(env, argv[2], &max);
-    return done(env, wvline(slots[win], (chtype)ch, (int)max));
+    enif_mutex_lock(g_lock);
+    int code = wvline(slots[win], (chtype)ch, (int)max);
+    enif_mutex_unlock(g_lock);
+    return done(env, code);
 }
 
 // border
@@ -683,8 +808,11 @@ e_border(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
     enif_get_long(env, argv[5], &tr);
     enif_get_long(env, argv[6], &bl);
     enif_get_long(env, argv[7], &br);
-    return done(env, wborder(slots[0], (chtype)ls, (chtype)rs, (chtype)ts,
-            (chtype)bs, (chtype)tl, (chtype)tr, (chtype)bl, (chtype)br));
+    enif_mutex_lock(g_lock);
+    int code = wborder(slots[0], (chtype)ls, (chtype)rs, (chtype)ts,
+            (chtype)bs, (chtype)tl, (chtype)tr, (chtype)bl, (chtype)br);
+    enif_mutex_unlock(g_lock);
+    return done(env, code);
 }
 
 static ERL_NIF_TERM 
@@ -700,8 +828,11 @@ e_wborder(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
     enif_get_long(env, argv[6], &tr);
     enif_get_long(env, argv[7], &bl);
     enif_get_long(env, argv[8], &br);
-    return done(env, wborder(slots[win], (chtype)ls, (chtype)rs, (chtype)ts,
-            (chtype)bs, (chtype)tl, (chtype)tr, (chtype)bl, (chtype)br));
+    enif_mutex_lock(g_lock);
+    int code = wborder(slots[win], (chtype)ls, (chtype)rs, (chtype)ts,
+            (chtype)bs, (chtype)tl, (chtype)tr, (chtype)bl, (chtype)br);
+    enif_mutex_unlock(g_lock);
+    return done(env, code);
 }
 
 // box
@@ -713,7 +844,10 @@ e_box(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
     enif_get_long(env, argv[0], &win);
     enif_get_long(env, argv[1], &hch);
     enif_get_long(env, argv[2], &vch);
-    return done(env, box(slots[win], (chtype)vch, (chtype)hch));
+    enif_mutex_lock(g_lock);
+    int code = box(slots[win], (chtype)vch, (chtype)hch);
+    enif_mutex_unlock(g_lock);
+    return done(env, code);
 }
 
 // keypad
@@ -724,7 +858,10 @@ e_keypad(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
     long win, flag;
     enif_get_long(env, argv[0], &win);
     enif_get_long(env, argv[1], &flag);
-    return done(env, keypad(slots[win], (int)flag));
+    enif_mutex_lock(g_lock);
+    int code = keypad(slots[win], (int)flag);
+    enif_mutex_unlock(g_lock);
+    return done(env, code);
 }
 
 // getch
