@@ -15,7 +15,7 @@
 #include <ncurses.h>
 #include "erl_nif.h"
 
-#define _MAXWINDOWS 64
+#define _MAXWINDOWS 256
 
 static WINDOW *slots[_MAXWINDOWS+1];
 
