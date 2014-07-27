@@ -79,7 +79,8 @@
         vline/2,
         vline/3,
         waddch/2,
-        waddstr/2
+        waddstr/2,
+        wgetch/1
     ]).
 
 %% =============================================================================
@@ -309,7 +310,10 @@ keypad(Win, Flag) when is_integer(Win) and is_boolean(Flag) ->
 %% getch
 
 getch() ->
-    e_getch(self()),
+    wgetch(0).
+
+wgetch(Win) ->
+    e_wgetch(self(),Win),
     receive
         Char -> Char
     end.
@@ -453,5 +457,5 @@ e_box(_Win, _Horz, _Vert) ->
 e_keypad(_Win, _Flag) ->
     not_initialized.
 
-e_getch(_Pid) ->
+e_wgetch(_Pid,_Win) ->
     not_initialized.

@@ -899,10 +899,10 @@ e_keypad(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
     return done(env, code);
 }
 
-// getch
+// wgetch
 
 static ERL_NIF_TERM 
-e_getch(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
+e_wgetch(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
 {
     state_t* state = (state_t*) enif_priv_data(env);
     qitem_payload_t* payload = 
@@ -914,7 +914,10 @@ e_getch(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
         return enif_make_badarg(env);
     }
 
-    payload->winslot = 0;
+    long win;
+    enif_get_long(env, argv[1], &win);
+
+    payload->winslot = win;
     payload->pid = pid;
     queue_push(state->queue, payload);
 
@@ -1010,7 +1013,7 @@ static ErlNifFunc nif_funcs[] =
     {"e_box", 3, e_box},
 
     {"e_keypad", 2, e_keypad},
-    {"e_getch", 1, e_getch},
+    {"e_wgetch", 2, e_wgetch},
 };
 
 ERL_NIF_INIT(encurses, nif_funcs, load, NULL, NULL, unload)

@@ -123,5 +123,5 @@ static ERL_NIF_TERM e_box(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[]);
 
 static ERL_NIF_TERM e_keypad(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[]);
 
-static ERL_NIF_TERM e_getch(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[]);
+static ERL_NIF_TERM e_wgetch(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[]);
 
