@@ -36,10 +36,17 @@
 
 static ErlNifMutex* g_lock = NULL;
 
+typedef struct
+{
+    ErlNifPid* pid;
+    long winslot;
+} qitem_payload_t;
+  
+
 typedef struct _qitem_t
 {
     struct _qitem_t* next;
-    ErlNifPid* pid;
+    qitem_payload_t* payload;
 } qitem_t;
 
 typedef struct
@@ -107,12 +114,12 @@ queue_destroy(queue_t* queue)
 }
 
 int
-queue_push(queue_t* queue, ErlNifPid* pid)
+queue_push(queue_t* queue, qitem_payload_t* payload)
 {
     qitem_t* item = (qitem_t*) enif_alloc(sizeof(qitem_t));
     if(item == NULL) return 0;
 
-    item->pid = pid;
+    item->payload = payload;
     item->next = NULL;
 
     enif_mutex_lock(queue->lock);
@@ -135,11 +142,11 @@ queue_push(queue_t* queue, ErlNifPid* pid)
     return 1;
 }
 
-ErlNifPid*
+qitem_payload_t*
 queue_pop(queue_t* queue)
 {
     qitem_t* item;
-    ErlNifPid* ret = NULL;
+    qitem_payload_t* ret = NULL;
     
     enif_mutex_lock(queue->lock);
 
@@ -159,7 +166,7 @@ queue_pop(queue_t* queue)
 
     enif_mutex_unlock(queue->lock);
 
-    ret = item->pid;
+    ret = item->payload;
     enif_free(item);
 
     return ret;
@@ -898,6 +905,8 @@ static ERL_NIF_TERM
 e_getch(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
 {
     state_t* state = (state_t*) enif_priv_data(env);
+    qitem_payload_t* payload = 
+      (qitem_payload_t*) enif_alloc(sizeof(qitem_payload_t));
     ErlNifPid* pid = (ErlNifPid*) enif_alloc(sizeof(ErlNifPid));
 
     if(!enif_get_local_pid(env, argv[0], pid))
@@ -905,7 +914,9 @@ e_getch(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
         return enif_make_badarg(env);
     }
 
-    queue_push(state->queue, pid);
+    payload->winslot = 0;
+    payload->pid = pid;
+    queue_push(state->queue, payload);
 
     return state->atom_ok;
 }
@@ -915,14 +926,16 @@ thr_main(void* obj)
 {
     state_t* state = (state_t*) obj;
     ErlNifEnv* env = enif_alloc_env();
-    ErlNifPid* pid;
+    qitem_payload_t* payload;
     ERL_NIF_TERM msg;
 
-    while((pid = queue_pop(state->queue)) != NULL)
+    while((payload = queue_pop(state->queue)) != NULL)
     {
-        msg = enif_make_int(env, getch());
-        enif_send(NULL, pid, env, msg);
-        enif_free(pid);
+        WINDOW* win = slots[payload->winslot];
+        msg = enif_make_int(env, wgetch(win));
+        enif_send(NULL, payload->pid, env, msg);
+        enif_free(payload->pid);
+        enif_free(payload);
         enif_clear_env(env);
     }
 
