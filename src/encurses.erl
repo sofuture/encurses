@@ -50,6 +50,7 @@
         erase/0,
         erase/1,
         getch/0,
+        getch/1,
         getxy/0,
         getxy/1,
         getmaxxy/0,
@@ -79,8 +80,7 @@
         vline/2,
         vline/3,
         waddch/2,
-        waddstr/2,
-        wgetch/1
+        waddstr/2
     ]).
 
 %% =============================================================================
@@ -310,9 +310,9 @@ keypad(Win, Flag) when is_integer(Win) and is_boolean(Flag) ->
 %% getch
 
 getch() ->
-    wgetch(0).
+    getch(0).
 
-wgetch(Win) ->
+getch(Win) ->
     e_wgetch(self(),Win),
     receive
         Char -> Char
