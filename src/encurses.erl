@@ -33,7 +33,7 @@
 -on_load(load_nif/0).
 
 -export([
-        addch/1, 
+        addch/1,
         addstr/1,
         attroff/1,
         attroff/2,
@@ -42,7 +42,7 @@
         border/8,
         border/9,
         box/3,
-        cbreak/0, 
+        cbreak/0,
         curs_set/1,
         delwin/1,
         echo/0,
@@ -71,7 +71,7 @@
         newwin/4,
         nl/0,
         nocbreak/0,
-        noecho/0, 
+        noecho/0,
         nonl/0,
         refresh/0,
         refresh/1,
@@ -109,8 +109,8 @@ refresh(Win) when is_integer(Win) ->
 
 %% window management
 
-newwin(Width, Height, StartX, StartY) when is_integer(Width) andalso 
-        is_integer(Height) andalso is_integer(StartX) andalso 
+newwin(Width, Height, StartX, StartY) when is_integer(Width) andalso
+        is_integer(Height) andalso is_integer(StartX) andalso
         is_integer(StartY) ->
     e_newwin(Width, Height, StartX, StartY).
 
@@ -127,7 +127,7 @@ initscr() ->
 
 %% cbreak
 
-cbreak() -> 
+cbreak() ->
     e_cbreak().
 
 nocbreak() ->
@@ -264,7 +264,7 @@ scrollok(Win, Flag) when is_integer(Win) andalso is_boolean(Flag) ->
 hline(Char, MaxN) when is_integer(Char) andalso is_integer(MaxN) ->
     e_hline(Char, MaxN).
 
-hline(Win, Char, MaxN) when is_integer(Win) andalso is_integer(Char) 
+hline(Win, Char, MaxN) when is_integer(Win) andalso is_integer(Char)
         andalso is_integer(MaxN) ->
     e_whline(Win, Char, MaxN).
 
@@ -277,15 +277,15 @@ vline(Win, Char, MaxN) when is_integer(Win) andalso is_integer(Char)
 
 %% border
 
-border(Ls, Rs, Ts, Bs, TLs, TRs, BLs, BRs) 
-  when is_integer(Ls) andalso is_integer(Rs) andalso 
+border(Ls, Rs, Ts, Bs, TLs, TRs, BLs, BRs)
+  when is_integer(Ls) andalso is_integer(Rs) andalso
         is_integer(Ts) andalso is_integer(Bs) andalso is_integer(TLs) andalso
         is_integer(TRs) andalso is_integer(BLs) andalso is_integer(BRs) ->
     e_border(Ls, Rs, Ts, Bs, TLs, TRs, BLs, BRs).
 
-border(Win, Ls, Rs, Ts, Bs, TLs, TRs, BLs, BRs) 
-  when is_integer(Win) andalso is_integer(Ls) andalso 
-        is_integer(Rs) andalso is_integer(Ts) andalso is_integer(Bs) andalso 
+border(Win, Ls, Rs, Ts, Bs, TLs, TRs, BLs, BRs)
+  when is_integer(Win) andalso is_integer(Ls) andalso
+        is_integer(Rs) andalso is_integer(Ts) andalso is_integer(Bs) andalso
         is_integer(TLs) andalso is_integer(TRs) andalso is_integer(BLs) andalso
         is_integer(BRs) ->
     e_wborder(Win, Ls, Rs, Ts, Bs, TLs, TRs, BLs, BRs).
@@ -313,7 +313,7 @@ getch() ->
     getch(0).
 
 getch(Win) ->
-    e_wgetch(self(),Win),
+    e_wgetch(self(), Win),
     receive
         Char -> Char
     end.
@@ -340,16 +340,16 @@ e_endwin() ->
 e_initscr() ->
     not_initialized.
 
-e_cbreak() -> 
+e_cbreak() ->
     not_initialized.
 
-e_nocbreak() -> 
+e_nocbreak() ->
     not_initialized.
 
-e_echo() -> 
+e_echo() ->
     not_initialized.
 
-e_noecho() -> 
+e_noecho() ->
     not_initialized.
 
 e_erase() ->
@@ -457,5 +457,5 @@ e_box(_Win, _Horz, _Vert) ->
 e_keypad(_Win, _Flag) ->
     not_initialized.
 
-e_wgetch(_Pid,_Win) ->
+e_wgetch(_Pid, _Win) ->
     not_initialized.
