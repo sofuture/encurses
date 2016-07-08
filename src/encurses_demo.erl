@@ -47,8 +47,8 @@ go() ->
     spawn(?MODULE, bounce_text, [Str, StrLen, 0, 0, 1, 1]),
     spawn(?MODULE, bounce_timer, [Timer, Mx div 2, My div 2, -1, 1]),
     register(main, self()),
-    receive 
-        {timeout, Timer, times_up} ->
+    receive
+        {timeout, _Timer, times_up} ->
             encurses:erase(),
             encurses:refresh(),
             encurses:endwin()
@@ -76,14 +76,14 @@ bounce_text(Str, StrLen, PrevX, PrevY, DirX, DirY) ->
 calc_new_pos(Len, Px, Py, Dx, Dy) ->
     {Mx, My} = encurses:getmaxxy(),
     {NewPy, NewDy} =
-    if 
+    if
         (Py+(Dy) >= My) orelse (Py+(Dy) < 0) ->
             {Py+(Dy*-1), Dy*-1};
         true ->
             {Py+(Dy), Dy}
     end,
     {NewPx, NewDx} =
-    if 
+    if
         (Px+(Dx)+Len >= Mx) orelse (Px+(Dx) < 0) ->
             {Px+(Dx*-1), Dx*-1};
         true ->
@@ -138,6 +138,6 @@ parse_direction(Char) ->
         $2 -> kp_s;
         338 -> kp_se;
         $3 -> kp_se;
+        $q -> main ! {timeout, bla, times_up};
         Other -> Other
     end.
-
