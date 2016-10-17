@@ -323,139 +323,139 @@ getch(Win) ->
 %% =============================================================================
 
 e_refresh() ->
-    not_initialized.
+    erlang:nif_error(not_initialized, []).
 
 e_wrefresh(_Win) ->
-    not_initialized.
+    erlang:nif_error(not_initialized, []).
 
 e_newwin(_Width, _Height, _StartX, _StartY) ->
-    not_initialized.
+    erlang:nif_error(not_initialized, []).
 
 e_delwin(_Win) ->
-    not_initialized.
+    erlang:nif_error(not_initialized, []).
 
 e_endwin() ->
-    not_initialized.
+    erlang:nif_error(not_initialized, []).
 
 e_initscr() ->
-    not_initialized.
+    erlang:nif_error(not_initialized, []).
 
 e_cbreak() ->
-    not_initialized.
+    erlang:nif_error(not_initialized, []).
 
 e_nocbreak() ->
-    not_initialized.
+    erlang:nif_error(not_initialized, []).
 
 e_echo() ->
-    not_initialized.
+    erlang:nif_error(not_initialized, []).
 
 e_noecho() ->
-    not_initialized.
+    erlang:nif_error(not_initialized, []).
 
 e_erase() ->
-    not_initialized.
+    erlang:nif_error(not_initialized, []).
 
 e_werase(_Win) ->
-    not_initialized.
+    erlang:nif_error(not_initialized, []).
 
 e_addch(_Char) ->
-    not_initialized.
+    erlang:nif_error(not_initialized, []).
 
 e_waddch(_Win, _Char) ->
-    not_initialized.
+    erlang:nif_error(not_initialized, []).
 
 e_mvaddch(_X, _Y, _Char) ->
-    not_initialized.
+    erlang:nif_error(not_initialized, []).
 
 e_mvwaddch(_Win, _X, _Y, _Char) ->
-    not_initialized.
+    erlang:nif_error(not_initialized, []).
 
 e_addstr(_StrLen, _String) ->
-    not_initialized.
+    erlang:nif_error(not_initialized, []).
 
 e_waddstr(_Win, _StrLen, _String) ->
-    not_initialized.
+    erlang:nif_error(not_initialized, []).
 
 e_mvaddstr(_X, _Y, _StrLen, _String) ->
-    not_initialized.
+    erlang:nif_error(not_initialized, []).
 
 e_mvwaddstr(_Win, _X, _Y, _StrLen, _String) ->
-    not_initialized.
+    erlang:nif_error(not_initialized, []).
 
 e_move(_X, _Y) ->
-    not_initialized.
+    erlang:nif_error(not_initialized, []).
 
 e_wmove(_Win, _X, _Y) ->
-    not_initialized.
+    erlang:nif_error(not_initialized, []).
 
 e_getxy() ->
-    not_initialized.
+    erlang:nif_error(not_initialized, []).
 
 e_wgetxy(_Win) ->
-    not_initialized.
+    erlang:nif_error(not_initialized, []).
 
 e_getmaxxy() ->
-    not_initialized.
+    erlang:nif_error(not_initialized, []).
 
 e_wgetmaxxy(_Win) ->
-    not_initialized.
+    erlang:nif_error(not_initialized, []).
 
 e_curs_set(_Flag) ->
-    not_initialized.
+    erlang:nif_error(not_initialized, []).
 
 e_has_colors() ->
-    not_initialized.
+    erlang:nif_error(not_initialized, []).
 
 e_start_color() ->
-    not_initialized.
+    erlang:nif_error(not_initialized, []).
 
 e_init_pair(_N, _FColor, _BColor) ->
-    not_initialized.
+    erlang:nif_error(not_initialized, []).
 
 e_attron(_Mask) ->
-    not_initialized.
+    erlang:nif_error(not_initialized, []).
 
 e_wattron(_Win, _Mask) ->
-    not_initialized.
+    erlang:nif_error(not_initialized, []).
 
 e_attroff(_Mask) ->
-    not_initialized.
+    erlang:nif_error(not_initialized, []).
 
 e_wattroff(_Win, _Mask) ->
-    not_initialized.
+    erlang:nif_error(not_initialized, []).
 
 e_nl() ->
-    not_initialized.
+    erlang:nif_error(not_initialized, []).
 
 e_nonl() ->
-    not_initialized.
+    erlang:nif_error(not_initialized, []).
 
 e_scrollok(_Win, _Flag) ->
-    not_initialized.
+    erlang:nif_error(not_initialized, []).
 
 e_hline(_Char, _MaxN) ->
-    not_initialized.
+    erlang:nif_error(not_initialized, []).
 
 e_whline(_Win, _Char, _MaxN) ->
-    not_initialized.
+    erlang:nif_error(not_initialized, []).
 
 e_vline(_Char, _MaxN) ->
-    not_initialized.
+    erlang:nif_error(not_initialized, []).
 
 e_wvline(_Win, _Char, _MaxN) ->
-    not_initialized.
+    erlang:nif_error(not_initialized, []).
 
 e_border(_Ls, _Rs, _Ts, _Bs, _TLs, _TRs, _BLs, _BRs) ->
-    not_initialized.
+    erlang:nif_error(not_initialized, []).
 
 e_wborder(_Win, _Ls, _Rs, _Ts, _Bs, _TLs, _TRs, _BLs, _BRs) ->
-    not_initialized.
+    erlang:nif_error(not_initialized, []).
 
 e_box(_Win, _Horz, _Vert) ->
-    not_initialized.
+    erlang:nif_error(not_initialized, []).
 
 e_keypad(_Win, _Flag) ->
-    not_initialized.
+    erlang:nif_error(not_initialized, []).
 
 e_wgetch(_Pid, _Win) ->
-    not_initialized.
+    erlang:nif_error(not_initialized, []).
