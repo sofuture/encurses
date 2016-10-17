@@ -1,3 +1,5 @@
 priv/
 c_src/*.o
 ebin/
+_build/
+.rebar
