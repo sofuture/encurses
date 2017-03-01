@@ -77,6 +77,8 @@
         refresh/1,
         scrollok/2,
         start_color/0,
+        timeout/1,
+        timeout/2,
         vline/2,
         vline/3,
         waddch/2,
@@ -307,6 +309,14 @@ keypad(Win, Flag) when is_integer(Win) and is_boolean(Flag) ->
         false -> e_keypad(Win, 0)
     end.
 
+%% timeout
+
+timeout(Delay) when is_integer(Delay) ->
+    e_timeout(Delay).
+
+timeout(Win, Delay) when is_integer(Win) and is_integer(Delay) ->
+    e_wtimeout(Win, Delay).
+
 %% getch
 
 getch() ->
@@ -455,6 +465,12 @@ e_box(_Win, _Horz, _Vert) ->
     erlang:nif_error(not_initialized, []).
 
 e_keypad(_Win, _Flag) ->
+    erlang:nif_error(not_initialized, []).
+
+e_timeout(_Delay) ->
+    erlang:nif_error(not_initialized, []).
+
+e_wtimeout(_Win, _Delay) ->
     erlang:nif_error(not_initialized, []).
 
 e_wgetch(_Pid, _Win) ->

@@ -899,6 +899,32 @@ e_keypad(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
     return done(env, code);
 }
 
+// timeout
+
+static ERL_NIF_TERM
+e_timeout(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
+{
+    int delay;
+    enif_get_int(env, argv[0], &delay);
+    enif_mutex_lock(g_lock);
+    timeout(delay);
+    enif_mutex_unlock(g_lock);
+    return done(env, 0);
+}
+
+static ERL_NIF_TERM
+e_wtimeout(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
+{
+    long win;
+    int delay;
+    enif_get_long(env, argv[0], &win);
+    enif_get_int(env, argv[1], &delay);
+    enif_mutex_lock(g_lock);
+    wtimeout(slots[win], delay);
+    enif_mutex_unlock(g_lock);
+    return done(env, 0);
+}
+
 // wgetch
 
 static ERL_NIF_TERM 
@@ -1014,6 +1040,9 @@ static ErlNifFunc nif_funcs[] =
 
     {"e_keypad", 2, e_keypad},
     {"e_wgetch", 2, e_wgetch},
+
+    {"e_timeout", 1, e_timeout},
+    {"e_wtimeout", 2, e_wtimeout}
 };
 
 ERL_NIF_INIT(encurses, nif_funcs, load, NULL, NULL, unload)
