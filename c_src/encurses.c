@@ -1,5 +1,5 @@
 // ============================================================================
-// Encurses 0.4.1
+// Encurses 0.4.2
 //
 // Copyright © 2012 Jeff Zellner <jeff.zellner@gmail.com>. All Rights Reserved.
 //
@@ -41,7 +41,7 @@ typedef struct
     ErlNifPid* pid;
     long winslot;
 } qitem_payload_t;
-  
+
 
 typedef struct _qitem_t
 {
@@ -69,13 +69,13 @@ queue_t*
 queue_create()
 {
     queue_t* ret;
-    
+
     ret = (queue_t*) enif_alloc(sizeof(queue_t));
     if(ret == NULL) return NULL;
 
-    ret->lock = NULL; 
-    ret->cond = NULL; 
-    ret->head = NULL; 
+    ret->lock = NULL;
+    ret->cond = NULL;
+    ret->head = NULL;
     ret->tail = NULL;
 
     ret->lock = enif_mutex_create("q_lock");
@@ -147,7 +147,7 @@ queue_pop(queue_t* queue)
 {
     qitem_t* item;
     qitem_payload_t* ret = NULL;
-    
+
     enif_mutex_lock(queue->lock);
 
     while(queue->head == NULL)
@@ -242,14 +242,14 @@ find_free_window_slot()
     return -1;
 }
 
-static ERL_NIF_TERM 
+static ERL_NIF_TERM
 done(ErlNifEnv* env, int code)
 {
     if(code == OK)
     {
         return enif_make_atom(env, "ok");
     }
-    else 
+    else
     {
         return enif_make_tuple2(env,
                 enif_make_atom(env, "error"),
@@ -258,13 +258,13 @@ done(ErlNifEnv* env, int code)
 }
 
 static ERL_NIF_TERM
-boolean(ErlNifEnv* env, int value) 
+boolean(ErlNifEnv* env, int value)
 {
     if(value == TRUE)
     {
         return enif_make_atom(env, "true");
     }
-    else 
+    else
     {
         return enif_make_atom(env, "false");
     }
@@ -272,7 +272,7 @@ boolean(ErlNifEnv* env, int value)
 
 // refresh
 
-static ERL_NIF_TERM 
+static ERL_NIF_TERM
 e_refresh(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
 {
     enif_mutex_lock(g_lock);
@@ -281,7 +281,7 @@ e_refresh(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
     return done(env, code);
 }
 
-static ERL_NIF_TERM 
+static ERL_NIF_TERM
 e_wrefresh(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
 {
     long win;
@@ -296,7 +296,7 @@ e_wrefresh(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
 
 // newwin
 
-static ERL_NIF_TERM 
+static ERL_NIF_TERM
 e_newwin(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
 {
     enif_mutex_lock(g_lock);
@@ -318,23 +318,23 @@ e_newwin(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
 
 // delwin
 
-static ERL_NIF_TERM 
+static ERL_NIF_TERM
 e_delwin(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
 {
     long slot;
     enif_get_long(env, argv[0], &slot);
     enif_mutex_lock(g_lock);
-    if(slot == 0) 
+    if(slot == 0)
     {
         enif_mutex_unlock(g_lock);
         return done(env, FALSE);
     }
-    else if(slots[slot] == NULL) 
+    else if(slots[slot] == NULL)
     {
         enif_mutex_unlock(g_lock);
         return done(env, FALSE);
     }
-    else 
+    else
     {
         delwin(slots[slot]);
         slots[slot] = NULL;
@@ -345,7 +345,7 @@ e_delwin(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
 
 // endwin
 
-static ERL_NIF_TERM 
+static ERL_NIF_TERM
 e_endwin(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
 {
     enif_mutex_lock(g_lock);
@@ -356,7 +356,7 @@ e_endwin(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
 
 // initscr
 
-static ERL_NIF_TERM 
+static ERL_NIF_TERM
 e_initscr(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
 {
     enif_mutex_lock(g_lock);
@@ -367,7 +367,7 @@ e_initscr(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
 
 // cbreak
 
-static ERL_NIF_TERM 
+static ERL_NIF_TERM
 e_cbreak(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
 {
     enif_mutex_lock(g_lock);
@@ -378,7 +378,7 @@ e_cbreak(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
 
 // nocbreak
 
-static ERL_NIF_TERM 
+static ERL_NIF_TERM
 e_nocbreak(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
 {
     enif_mutex_lock(g_lock);
@@ -389,7 +389,7 @@ e_nocbreak(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
 
 // echo
 
-static ERL_NIF_TERM 
+static ERL_NIF_TERM
 e_echo(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
 {
     enif_mutex_lock(g_lock);
@@ -400,7 +400,7 @@ e_echo(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
 
 // noecho
 
-static ERL_NIF_TERM 
+static ERL_NIF_TERM
 e_noecho(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
 {
     enif_mutex_lock(g_lock);
@@ -411,7 +411,7 @@ e_noecho(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
 
 // erase
 
-static ERL_NIF_TERM 
+static ERL_NIF_TERM
 int_erase(ErlNifEnv* env, WINDOW *win)
 {
     enif_mutex_lock(g_lock);
@@ -420,13 +420,13 @@ int_erase(ErlNifEnv* env, WINDOW *win)
     return done(env, code);
 }
 
-static ERL_NIF_TERM 
+static ERL_NIF_TERM
 e_erase(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
 {
     return int_erase(env, slots[0]);
 }
 
-static ERL_NIF_TERM 
+static ERL_NIF_TERM
 e_werase(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
 {
     long win;
@@ -436,7 +436,7 @@ e_werase(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
 
 // addch
 
-static ERL_NIF_TERM 
+static ERL_NIF_TERM
 e_addch(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
 {
     long ch;
@@ -447,7 +447,7 @@ e_addch(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
     return done(env, code);
 }
 
-static ERL_NIF_TERM 
+static ERL_NIF_TERM
 e_waddch(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
 {
     long win, ch;
@@ -459,7 +459,7 @@ e_waddch(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
     return done(env, code);
 }
 
-static ERL_NIF_TERM 
+static ERL_NIF_TERM
 e_mvaddch(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
 {
     long x, y, ch;
@@ -472,7 +472,7 @@ e_mvaddch(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
     return done(env, code);
 }
 
-static ERL_NIF_TERM 
+static ERL_NIF_TERM
 e_mvwaddch(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
 {
     long win, x, y, ch;
@@ -501,7 +501,7 @@ e_addstr(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
     return done(env, code);
 }
 
-static ERL_NIF_TERM 
+static ERL_NIF_TERM
 e_waddstr(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
 {
     int length;
@@ -512,7 +512,7 @@ e_waddstr(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
 
     int win;
     enif_get_int(env, argv[0], &win);
-    
+
     enif_mutex_lock(g_lock);
     int code = waddnstr(slots[win], buff, length);
     enif_mutex_unlock(g_lock);
@@ -520,7 +520,7 @@ e_waddstr(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
     return done(env, code);
 }
 
-static ERL_NIF_TERM 
+static ERL_NIF_TERM
 e_mvaddstr(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
 {
     int length;
@@ -532,7 +532,7 @@ e_mvaddstr(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
     int x, y;
     enif_get_int(env, argv[0], &x);
     enif_get_int(env, argv[1], &y);
-    
+
     enif_mutex_lock(g_lock);
     int code = mvaddnstr(y, x, buff, length);
     enif_mutex_unlock(g_lock);
@@ -540,7 +540,7 @@ e_mvaddstr(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
     return done(env, code);
 }
 
-static ERL_NIF_TERM 
+static ERL_NIF_TERM
 e_mvwaddstr(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
 {
     int length;
@@ -636,7 +636,7 @@ e_getmaxxy(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
     return int_getmaxxy(env, slots[0]);
 }
 
-static ERL_NIF_TERM 
+static ERL_NIF_TERM
 e_wgetmaxxy(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
 {
     long win;
@@ -646,7 +646,7 @@ e_wgetmaxxy(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
 
 // curs_set
 
-static ERL_NIF_TERM 
+static ERL_NIF_TERM
 e_curs_set(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
 {
     long flag;
@@ -659,7 +659,7 @@ e_curs_set(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
 
 // has_colors
 
-static ERL_NIF_TERM 
+static ERL_NIF_TERM
 e_has_colors(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
 {
     enif_mutex_lock(g_lock);
@@ -670,7 +670,7 @@ e_has_colors(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
 
 // start_colors
 
-static ERL_NIF_TERM 
+static ERL_NIF_TERM
 e_start_color(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
 {
     enif_mutex_lock(g_lock);
@@ -697,7 +697,7 @@ e_init_pair(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
 
 // attron/attroff
 
-static ERL_NIF_TERM 
+static ERL_NIF_TERM
 e_attron(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
 {
     long attrs;
@@ -708,7 +708,7 @@ e_attron(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
     return done(env, code);
 }
 
-static ERL_NIF_TERM 
+static ERL_NIF_TERM
 e_wattron(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
 {
     long win, attrs;
@@ -720,7 +720,7 @@ e_wattron(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
     return done(env, code);
 }
 
-static ERL_NIF_TERM 
+static ERL_NIF_TERM
 e_attroff(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
 {
     long attrs;
@@ -731,7 +731,7 @@ e_attroff(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
     return done(env, code);
 }
 
-static ERL_NIF_TERM 
+static ERL_NIF_TERM
 e_wattroff(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
 {
     long win, attrs;
@@ -745,7 +745,7 @@ e_wattroff(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
 
 // nl/nonl
 
-static ERL_NIF_TERM 
+static ERL_NIF_TERM
 e_nl(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
 {
     enif_mutex_lock(g_lock);
@@ -754,7 +754,7 @@ e_nl(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
     return done(env, code);
 }
 
-static ERL_NIF_TERM 
+static ERL_NIF_TERM
 e_nonl(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
 {
     enif_mutex_lock(g_lock);
@@ -765,7 +765,7 @@ e_nonl(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
 
 // scrollok
 
-static ERL_NIF_TERM 
+static ERL_NIF_TERM
 e_scrollok(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
 {
     long win, flag;
@@ -779,7 +779,7 @@ e_scrollok(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
 
 // vline/hline
 
-static ERL_NIF_TERM 
+static ERL_NIF_TERM
 e_hline(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
 {
     long ch, max;
@@ -791,7 +791,7 @@ e_hline(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
     return done(env, code);
 }
 
-static ERL_NIF_TERM 
+static ERL_NIF_TERM
 e_whline(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
 {
     long win, ch, max;
@@ -804,7 +804,7 @@ e_whline(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
     return done(env, code);
 }
 
-static ERL_NIF_TERM 
+static ERL_NIF_TERM
 e_vline(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
 {
     long ch, max;
@@ -816,7 +816,7 @@ e_vline(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
     return done(env, code);
 }
 
-static ERL_NIF_TERM 
+static ERL_NIF_TERM
 e_wvline(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
 {
     long win, ch, max;
@@ -831,7 +831,7 @@ e_wvline(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
 
 // border
 
-static ERL_NIF_TERM 
+static ERL_NIF_TERM
 e_border(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
 {
     long ls, rs, ts, bs, tl, tr, bl, br;
@@ -850,7 +850,7 @@ e_border(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
     return done(env, code);
 }
 
-static ERL_NIF_TERM 
+static ERL_NIF_TERM
 e_wborder(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
 {
     long win, ls, rs, ts, bs, tl, tr, bl, br;
@@ -872,7 +872,7 @@ e_wborder(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
 
 // box
 
-static ERL_NIF_TERM 
+static ERL_NIF_TERM
 e_box(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
 {
     long win, hch, vch;
@@ -887,7 +887,7 @@ e_box(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
 
 // keypad
 
-static ERL_NIF_TERM 
+static ERL_NIF_TERM
 e_keypad(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
 {
     long win, flag;
@@ -927,11 +927,11 @@ e_wtimeout(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
 
 // wgetch
 
-static ERL_NIF_TERM 
+static ERL_NIF_TERM
 e_wgetch(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
 {
     state_t* state = (state_t*) enif_priv_data(env);
-    qitem_payload_t* payload = 
+    qitem_payload_t* payload =
       (qitem_payload_t*) enif_alloc(sizeof(qitem_payload_t));
     ErlNifPid* pid = (ErlNifPid*) enif_alloc(sizeof(ErlNifPid));
 
